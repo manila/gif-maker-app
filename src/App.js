@@ -1,40 +1,66 @@
 import {createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
-import logo from './logo.svg';
 import './App.css';
 import { useState, useEffect } from 'react';
 import fs from 'fs';
 
 function App() {
-	const [file, setFile] = useState(null);
+	const [ thumbnailSrc, setThumbnailSrc ] = useState('');
+	const [ fileSrc, setFileSrc ] = useState('');
+	const [ ffmpegOutput, setFfmpegOutput ] = useState('');
 
-	useEffect(() => {
+	const fileSelected = async (event) => {
+		const file = event.target.files[0];
 
 		if (file) {
-		const ffmpeg = createFFmpeg({ log: true });
+			const ffmpeg = createFFmpeg({ 
+				corePath: 'ffmpeg-core.js',	
+				log: true 
+			});
 
-		(async () => {
+			ffmpeg.setLogger(({ type, message }) => {
+				console.log(type, message);
+				setFfmpegOutput(message);
+			});
+
 			await ffmpeg.load();
-			ffmpeg.FS('writeFile', 'test.avi', await fetchFile(file));
-			await ffmpeg.run('-i', 'test.avi', 'test.mp4');
-			//console.log(fs);
-			//await fs.promises.writeFile('test.mp4', ffmpeg.FS('readfile', 'test.mp4'));
-			process.exit(0);
-		})();
-			console.log("Hello");
-		}
-		
-		
-	}, [file])
 
-	const fileSelected = (event) => {
-		setFile(event.target.files[0]);
+			ffmpeg.FS('writeFile', 'input', await fetchFile(file));
+
+			await ffmpeg.run(
+				'-i', 
+				'input', 
+				'-ss','0.01', '-vframes' ,'1', '-f', 'image2', 
+				'thumbnail.jpg'
+			);
+
+			const thumbnail = ffmpeg.FS('readFile', 'thumbnail.jpg');
+
+			setThumbnailSrc(URL.createObjectURL(
+				new Blob([thumbnail.buffer], { type: 'image/jpg' })
+			));
+
+			await ffmpeg.run('-i', 'input', '-f', 'gif','output.gif');
+
+			setFfmpegOutput("ffmpeg exited")
+
+			const data = ffmpeg.FS('readFile', 'output.gif');
+		
+			setFfmpegOutput("Done.")
+
+			const dataURL = URL.createObjectURL(
+				new Blob([data.buffer], { type: 'image/gif' })
+			);
+
+			setFileSrc(dataURL);
+		}
 	}
 
 	return (
 		<div className="content">
 			<Header/>
-			<UploadArea inputEventHandler={ fileSelected } />
-			<PreviewArea/>
+			{ !thumbnailSrc && <UploadArea inputEventHandler={ fileSelected } /> }
+			<PreviewArea thumbnailSrc={ thumbnailSrc } gifSrc={ fileSrc } />
+			<RawOutput text={ ffmpegOutput } />
 	 		<Controls/>
 	  		<Footer/>
 		</div>
@@ -61,9 +87,22 @@ const UploadArea = (props) => {
 	)
 }
 
-const PreviewArea = () => {
+const RawOutput = (props) => {
 	return (
-		<></>
+		<>
+			<pre>{ props.text || 'ffmpeg not loaded' }</pre>
+		</>
+	);
+}
+
+const PreviewArea = (props) => {
+	const { gifSrc, thumbnailSrc } = props;
+
+	return (
+		<div className="preview">
+			{ !gifSrc && thumbnailSrc && <img src={ thumbnailSrc } />}
+			{ gifSrc && <img src={ gifSrc } />}
+		</div>
 	)
 }
 

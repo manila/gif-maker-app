@@ -7,7 +7,7 @@ body {
 div.content {
 	width: 90%;
 	max-width: 40em;
-	margin: auto;
+	margin: 0em auto;
 }
 
 header {
@@ -22,6 +22,21 @@ footer {
 	bottom: 1em;
 	left: 50%;
 	margin: 0em 0em 0em -5em;
+}
+
+video, img {
+	max-width: 100%;
+	display: block;
+	margin: 0px auto;
+}
+
+pre {
+	color: #efefef;
+	background: #444;
+	padding: 1em;
+	border-radius: 0.5em;
+	font-size: 0.8em;
+	overflow: hidden;
 }
 
 .upload-area {
