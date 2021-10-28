@@ -5,22 +5,19 @@ import { useState, useEffect } from 'react';
 import fs from 'fs';
 
 function App() {
-	const [file, setFile] = useState();
-	const [fileArrayBuffer, setFileArrayBuffer] = useState();
+	const [file, setFile] = useState(null);
 
 	useEffect(() => {
 
 		if (file) {
-		const ffmpeg = createFFmpeg({ 
-			corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js',	
-			log: true 
-		});
+		const ffmpeg = createFFmpeg({ log: true });
 
 		(async () => {
 			await ffmpeg.load();
 			ffmpeg.FS('writeFile', 'test.avi', await fetchFile(file));
 			await ffmpeg.run('-i', 'test.avi', 'test.mp4');
-			await fs.promises.writeFile('./test.mp4', ffmpeg.FS('readfile', 'test.mp4'));
+			//console.log(fs);
+			//await fs.promises.writeFile('test.mp4', ffmpeg.FS('readfile', 'test.mp4'));
 			process.exit(0);
 		})();
 			console.log("Hello");
